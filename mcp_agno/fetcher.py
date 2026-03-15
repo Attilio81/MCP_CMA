@@ -6,6 +6,11 @@ _converter.ignore_links = True
 _converter.ignore_images = True
 _converter.body_width = 0
 
+# NOTE: html2text.HTML2Text maintains internal state between calls.
+# This module-level singleton is safe only for single-threaded use
+# (FastMCP stdio transport). If the server ever uses concurrent transports,
+# construct a fresh HTML2Text() instance inside fetch_page() instead.
+
 
 def fetch_page(url: str) -> str:
     """Fetch a URL and return its content as plain text. Returns 'Error: ...' on failure."""

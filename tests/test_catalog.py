@@ -25,7 +25,6 @@ def test_slug_collision_seed_wins():
 def test_sitemap_unavailable_falls_back_to_seeds():
     """If sitemap fetch fails, server starts with seed entries only (no crash)."""
     from unittest.mock import patch
-    import sys, io
     with patch("mcp_agno.catalog.httpx.get", side_effect=Exception("network error")):
         catalog = build_catalog(fetch_sitemap=True)
     assert "agents" in catalog

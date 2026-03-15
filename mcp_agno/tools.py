@@ -80,6 +80,9 @@ def search_agno_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache)
     blocks = []
     all_failed = True
 
+    # Fetch full content for each top match. Results are cached after first fetch,
+    # but cold-cache searches fire N sequential HTTP requests (15s timeout each).
+    # This is acceptable for local single-user use.
     for entry in top:
         content = get_agno_page(entry.slug, catalog, cache)
         if content.startswith("Error:"):
