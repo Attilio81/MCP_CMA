@@ -26,9 +26,13 @@ class CatalogEntry:
 
 
 def _slug_from_url(url: str) -> str:
-    """Derive slug from last non-empty path segment of a URL."""
-    path = url.rstrip("/").split("/")[-1]
-    return path or url
+    """Derive slug from full path of a URL (excluding domain), to avoid collisions."""
+    try:
+        from urllib.parse import urlparse
+        path = urlparse(url).path.strip("/")
+        return path or url
+    except Exception:
+        return url
 
 
 def _fetch_sitemap_urls() -> list[str]:

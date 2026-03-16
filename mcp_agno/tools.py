@@ -3,10 +3,9 @@ from mcp_agno.catalog import CatalogEntry
 from mcp_agno.cache import Cache
 from mcp_agno.fetcher import fetch_page
 
-TOP_N = 3
-MAX_CONTENT_CHARS = 32_000
-EXCERPT_CHARS = 1_000
-TRUNCATION_NOTE = "\n\n[Content truncated. Request a specific subsection for more detail.]"
+TOP_N = 5
+MAX_CONTENT_CHARS = 8_000
+TRUNCATION_NOTE = "\n\n[Content truncated. Use get_agno_page() with a more specific section slug for full content.]"
 
 
 def list_agno_sections(catalog: dict[str, CatalogEntry]) -> str:
@@ -52,17 +51,12 @@ def _score_entry(entry: CatalogEntry, query_words: list[str]) -> int:
     return sum(text.count(word) for word in query_words)
 
 
-def _excerpt(content: str, query_words: list[str]) -> str:
-    lower = content.lower()
-    for word in query_words:
-        idx = lower.find(word)
-        if idx != -1:
-            start = max(0, idx - 100)
-            return content[start : start + EXCERPT_CHARS]
-    return content[:EXCERPT_CHARS]
-
-
 def search_agno_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache) -> str:
+    """Return matching section metadata only — no page fetching.
+
+    The LLM should call get_agno_page() on the slug it needs after reviewing results.
+    This keeps token usage minimal: search costs ~0 tokens beyond the result list.
+    """
     query_words = query.lower().split()
 
     scored = [
@@ -72,26 +66,14 @@ def search_agno_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache)
     scored = [(e, s) for e, s in scored if s > 0]
 
     if not scored:
-        return f"No results found for query: '{query}'. Use list_agno_sections() to browse all sections."
+        return f"No results found for '{query}'. Use list_agno_sections() to browse all sections."
 
     scored.sort(key=lambda x: x[1], reverse=True)
-    top = [entry for entry, _ in scored[:TOP_N]]
+    top = scored[:TOP_N]
 
-    blocks = []
-    all_failed = True
+    lines = [f"Top {len(top)} results for '{query}' (call get_agno_page(slug) to read content):\n"]
+    for entry, score in top:
+        desc = f" — {entry.description}" if entry.description else ""
+        lines.append(f"  slug: {entry.slug} | url: {entry.url}{desc}")
 
-    # Fetch full content for each top match. Results are cached after first fetch,
-    # but cold-cache searches fire N sequential HTTP requests (15s timeout each).
-    # This is acceptable for local single-user use.
-    for entry in top:
-        content = get_agno_page(entry.slug, catalog, cache)
-        if content.startswith("Error:"):
-            continue
-        all_failed = False
-        excerpt = _excerpt(content, query_words)
-        blocks.append(f"=== {entry.slug} ===\nURL: {entry.url}\nExcerpt: {excerpt}")
-
-    if all_failed:
-        return f"Error: could not fetch any results for query '{query}'."
-
-    return "\n\n".join(blocks)
+    return "\n".join(lines)

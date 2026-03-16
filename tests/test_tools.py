@@ -82,11 +82,11 @@ def test_get_page_truncates_long_content():
 # ---------------------------------------------------------------------------
 
 def test_search_scores_by_keyword():
+    """search returns metadata only — no fetch, just slug/url in output."""
     cache = Cache()
-    with patch("mcp_agno.tools.fetch_page", return_value="some agent content about memory"):
-        result = search_agno_docs("agents", CATALOG, cache)
+    result = search_agno_docs("agents", CATALOG, cache)
     assert "agents" in result
-    assert "===" in result  # result block header
+    assert "get_agno_page" in result  # hint to caller
 
 
 def test_search_no_match_returns_no_results_message():
@@ -96,27 +96,21 @@ def test_search_no_match_returns_no_results_message():
 
 
 def test_search_partial_fetch_failure():
-    """If one entry fetch fails, partial results are returned."""
+    """search is lazy: no fetches happen, both entries returned as metadata."""
     catalog = {
         "agents": CatalogEntry("agents", "https://docs.agno.com/agents", "Agents", "Build agents"),
         "teams":  CatalogEntry("teams",  "https://docs.agno.com/teams",  "Teams",  "Build teams"),
     }
     cache = Cache()
-
-    def fake_fetch(url):
-        if "agents" in url:
-            return "great agent content"
-        return "Error: network failure"
-
-    with patch("mcp_agno.tools.fetch_page", side_effect=fake_fetch):
-        result = search_agno_docs("build", catalog, cache)
-
+    result = search_agno_docs("build", catalog, cache)
     assert "agents" in result
-    assert "Error" not in result or "great agent content" in result
+    assert "teams" in result
+    assert "Error" not in result
 
 
 def test_search_all_fetches_fail():
+    """search never fetches, so no error even if network is down."""
     cache = Cache()
-    with patch("mcp_agno.tools.fetch_page", return_value="Error: network failure"):
-        result = search_agno_docs("agents teams", CATALOG, cache)
-    assert "Error" in result
+    result = search_agno_docs("agents teams", CATALOG, cache)
+    assert "agents" in result
+    assert "Error" not in result
