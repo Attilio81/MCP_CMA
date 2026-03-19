@@ -118,6 +118,13 @@ pytest
 
 ---
 
+## Resources
+
+- [AGNO Documentation](https://docs.agno.com) — official docs browsed by this server
+- [AGNO Cookbook](https://github.com/agno-agi/agno/tree/main/cookbook) — practical examples and ready-to-run recipes from the AGNO team
+
+---
+
 ## License
 
 MIT
