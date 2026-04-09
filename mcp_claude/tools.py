@@ -4,7 +4,7 @@ from mcp_claude.cache import Cache
 from mcp_claude.fetcher import fetch_page
 
 TOP_N = 5
-MAX_CONTENT_CHARS = 16_000
+MAX_CONTENT_CHARS = 20_000
 TRUNCATION_NOTE = "\n\n[Content truncated. Use get_claude_page() with a more specific section slug for full content.]"
 
 
