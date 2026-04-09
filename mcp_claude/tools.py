@@ -1,14 +1,14 @@
 from __future__ import annotations
-from mcp_agno.catalog import CatalogEntry
-from mcp_agno.cache import Cache
-from mcp_agno.fetcher import fetch_page
+from mcp_claude.catalog import CatalogEntry
+from mcp_claude.cache import Cache
+from mcp_claude.fetcher import fetch_page
 
 TOP_N = 5
 MAX_CONTENT_CHARS = 8_000
-TRUNCATION_NOTE = "\n\n[Content truncated. Use get_agno_page() with a more specific section slug for full content.]"
+TRUNCATION_NOTE = "\n\n[Content truncated. Use get_claude_page() with a more specific section slug for full content.]"
 
 
-def list_agno_sections(catalog: dict[str, CatalogEntry]) -> str:
+def list_claude_sections(catalog: dict[str, CatalogEntry]) -> str:
     lines = []
     for entry in catalog.values():
         line = f"slug: {entry.slug} | url: {entry.url}"
@@ -18,14 +18,14 @@ def list_agno_sections(catalog: dict[str, CatalogEntry]) -> str:
     return "\n".join(lines)
 
 
-def get_agno_page(section: str, catalog: dict[str, CatalogEntry], cache: Cache) -> str:
+def get_claude_page(section: str, catalog: dict[str, CatalogEntry], cache: Cache) -> str:
     # Resolve URL
     if section.startswith("http"):
         url = section
     elif section in catalog:
         url = catalog[section].url
     else:
-        return f"Error: section '{section}' not found. Use list_agno_sections() to see available sections."
+        return f"Error: section '{section}' not found. Use list_claude_sections() to see available sections."
 
     # Check cache
     cached = cache.get(url)
@@ -51,10 +51,10 @@ def _score_entry(entry: CatalogEntry, query_words: list[str]) -> int:
     return sum(text.count(word) for word in query_words)
 
 
-def search_agno_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache) -> str:
+def search_claude_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache) -> str:
     """Return matching section metadata only — no page fetching.
 
-    The LLM should call get_agno_page() on the slug it needs after reviewing results.
+    The LLM should call get_claude_page() on the slug it needs after reviewing results.
     This keeps token usage minimal: search costs ~0 tokens beyond the result list.
     """
     query_words = query.lower().split()
@@ -66,12 +66,12 @@ def search_agno_docs(query: str, catalog: dict[str, CatalogEntry], cache: Cache)
     scored = [(e, s) for e, s in scored if s > 0]
 
     if not scored:
-        return f"No results found for '{query}'. Use list_agno_sections() to browse all sections."
+        return f"No results found for '{query}'. Use list_claude_sections() to browse all sections."
 
     scored.sort(key=lambda x: x[1], reverse=True)
     top = scored[:TOP_N]
 
-    lines = [f"Top {len(top)} results for '{query}' (call get_agno_page(slug) to read content):\n"]
+    lines = [f"Top {len(top)} results for '{query}' (call get_claude_page(slug) to read content):\n"]
     for entry, score in top:
         desc = f" — {entry.description}" if entry.description else ""
         lines.append(f"  slug: {entry.slug} | url: {entry.url}{desc}")

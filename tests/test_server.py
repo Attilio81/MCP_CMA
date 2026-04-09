@@ -1,21 +1,20 @@
-import importlib
 import sys
 from unittest.mock import patch
 
 def _reload_server_patched():
     """Import server.py fresh with build_catalog patched to avoid network calls.
 
-    patch("mcp_agno.catalog.build_catalog") temporarily replaces the attribute
-    on the already-cached mcp_agno.catalog module object. When the fresh server
-    import then executes 'from mcp_agno.catalog import build_catalog', it reads
+    patch("mcp_claude.catalog.build_catalog") temporarily replaces the attribute
+    on the already-cached mcp_claude.catalog module object. When the fresh server
+    import then executes 'from mcp_claude.catalog import build_catalog', it reads
     that attribute from the live module object and gets the mock. So the
     module-level '_catalog = build_catalog(fetch_sitemap=True)' in server.py
     calls the mock — no network request is made.
     """
-    sys.modules.pop("mcp_agno.server", None)
-    with patch("mcp_agno.catalog.build_catalog", return_value={}):
-        import mcp_agno.server
-    return mcp_agno.server
+    sys.modules.pop("mcp_claude.server", None)
+    with patch("mcp_claude.catalog.build_catalog", return_value={}):
+        import mcp_claude.server
+    return mcp_claude.server
 
 def test_server_module_importable():
     """Server imports and runs module-level code without network calls."""

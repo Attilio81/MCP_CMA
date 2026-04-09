@@ -1,129 +1,97 @@
-# mcp-agno
+# MCP Claude Managed Agents
 
-An MCP (Model Context Protocol) server that gives AI assistants direct access to the [AGNO](https://docs.agno.com) framework documentation.
-
-Instead of crawling docs manually or relying on outdated training data, Claude and other MCP-compatible clients can browse, fetch, and search AGNO docs in real time.
+An MCP server that exposes the [Claude Managed Agents documentation](https://platform.claude.com/docs/en/managed-agents/overview) to Claude Desktop and Claude Code, keeping your AI assistant always up to date with the latest API docs.
 
 ## What it does
 
-Exposes three MCP tools:
+Provides three tools that Claude can call to read current documentation directly from `platform.claude.com`:
 
 | Tool | Description |
-|------|-------------|
-| `list_agno_sections` | List all available documentation sections with their slugs and URLs |
-| `get_agno_page` | Fetch the full content of a documentation page by slug or URL |
-| `search_agno_docs` | Keyword search across the catalog — returns matching slugs without fetching pages |
+|---|---|
+| `list_claude_sections` | List all available Managed Agents documentation sections |
+| `get_claude_page` | Fetch the full content of a documentation page by slug or URL |
+| `search_claude_docs` | Search sections by keyword and get matching slugs |
 
-On startup the server seeds a catalog of core sections (Introduction, Agents, Teams, Workflows, AgentOS) and auto-discovers additional pages from the live AGNO sitemap.
+**Covered sections (20 pages):** overview, quickstart, onboarding, agent-setup, tools, mcp-connector, permission-policies, skills, environments, cloud-containers, sessions, events-and-streaming, define-outcomes, vaults, github, files, memory, multi-agent, migration, observability.
 
----
+The catalog is seeded at startup with all known sections and auto-discovers new pages from the live `platform.claude.com/sitemap.xml`.
 
 ## Requirements
 
 - Python 3.11+
-- [uv](https://docs.astral.sh/uv/) (recommended) or pip
-
----
+- [`uv`](https://docs.astral.sh/uv/) (recommended) or `pip`
 
 ## Installation
 
-### With uv (recommended)
-
 ```bash
-git clone https://github.com/Attilio81/MCP_AGNO.git
-cd MCP_AGNO
+git clone https://github.com/Attilio81/MCP_CMA.git
+cd MCP_CMA
 uv pip install -e .
-```
-
-### With pip
-
-```bash
-git clone https://github.com/Attilio81/MCP_AGNO.git
-cd MCP_AGNO
+# or
 pip install -e .
 ```
 
-This installs the `mcp-agno` command.
+This installs the `mcp-claude` command.
 
----
+## Claude Desktop configuration
 
-## Usage with Claude Desktop
-
-Add the server to your Claude Desktop config (`claude_desktop_config.json`):
+Add to your `claude_desktop_config.json`:
 
 ```json
 {
   "mcpServers": {
-    "agno-docs": {
-      "command": "mcp-agno"
+    "claude-docs": {
+      "command": "mcp-claude"
     }
   }
 }
 ```
 
-If you installed with uv in a virtual environment, use the full path:
+If installed in a virtual environment, use the full path:
 
 ```json
 {
   "mcpServers": {
-    "agno-docs": {
-      "command": "/path/to/venv/bin/mcp-agno"
+    "claude-docs": {
+      "command": "/path/to/venv/bin/mcp-claude"
     }
   }
 }
 ```
 
-Restart Claude Desktop. The three tools will appear automatically.
+Restart Claude Desktop — the three tools appear automatically.
 
----
-
-## Usage with Claude Code (CLI)
+## Claude Code configuration
 
 ```bash
-claude mcp add agno-docs mcp-agno
+claude mcp add claude-docs mcp-claude
 ```
 
-Or add it to your project's `.mcp.json`:
+Or add to your project's `.mcp.json`:
 
 ```json
 {
   "mcpServers": {
-    "agno-docs": {
-      "command": "mcp-agno"
+    "claude-docs": {
+      "command": "mcp-claude"
     }
   }
 }
 ```
 
----
+## How it works
 
-## Running manually (for testing)
+1. At startup, seed entries for all 20 known Managed Agents pages are loaded into an in-memory catalog.
+2. The public sitemap at `platform.claude.com/sitemap.xml` is fetched to discover any new pages added by Anthropic. If the sitemap is unavailable, the server starts with seed entries only (no crash).
+3. On each tool call, pages are fetched live from `platform.claude.com` via plain HTTP (Next.js SSR — no JavaScript rendering required).
+4. Fetched content is cached in memory for the duration of the server session. Restart the server to clear the cache.
 
-```bash
-mcp-agno
-```
-
-The server runs over stdio and waits for MCP messages.
-
----
-
-## Development
+## Running tests
 
 ```bash
-git clone https://github.com/Attilio81/MCP_AGNO.git
-cd MCP_AGNO
-uv pip install -e ".[dev]"
+pip install pytest
 pytest
 ```
-
----
-
-## Resources
-
-- [AGNO Documentation](https://docs.agno.com) — official docs browsed by this server
-- [AGNO Cookbook](https://github.com/agno-agi/agno/tree/main/cookbook) — practical examples and ready-to-run recipes from the AGNO team
-
----
 
 ## License
 

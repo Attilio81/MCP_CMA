@@ -1,11 +1,11 @@
 [project]
-name = "mcp-agno"
+name = "mcp-claude"
 version = "0.1.0"
 requires-python = ">=3.11"
 dependencies = ["mcp", "httpx", "beautifulsoup4", "lxml", "html2text"]
 
 [project.scripts]
-mcp-agno = "mcp_agno.server:main"
+mcp-claude = "mcp_claude.server:main"
 
 [build-system]
 requires = ["hatchling"]

@@ -1,19 +1,21 @@
-from mcp_agno.cache import Cache
+from mcp_claude.cache import Cache
+
+BASE = "https://platform.claude.com/docs/en/managed-agents"
 
 
 def test_cache_miss_returns_none():
     c = Cache()
-    assert c.get("https://docs.agno.com/agents") is None
+    assert c.get(f"{BASE}/overview") is None
 
 
 def test_cache_stores_and_retrieves():
     c = Cache()
-    c.set("https://docs.agno.com/agents", "some content")
-    assert c.get("https://docs.agno.com/agents") == "some content"
+    c.set(f"{BASE}/overview", "some content")
+    assert c.get(f"{BASE}/overview") == "some content"
 
 
 def test_cache_overwrite():
     c = Cache()
-    c.set("https://docs.agno.com/agents", "old")
-    c.set("https://docs.agno.com/agents", "new")
-    assert c.get("https://docs.agno.com/agents") == "new"
+    c.set(f"{BASE}/overview", "old")
+    c.set(f"{BASE}/overview", "new")
+    assert c.get(f"{BASE}/overview") == "new"
